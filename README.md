@@ -10,7 +10,7 @@ Free Android bus app for Hyderabad and Telangana.
 
 ## Download
 
-**[Download the latest APK](https://github.com/sniff-yt/Bus-bhai/releases/latest)**. Open it on your phone and allow installs from unknown sources.
+**[Download the APK (v1.0.6, 4.9 MB)](https://github.com/sniff-yt/Bus-bhai/raw/main/BusBhaiHyderabad-v1.0.6.apk)**. Open it on your phone and allow installs from unknown sources.
 
 Route data comes from TGSRTC's open timetable, so district coverage is still thin. Open an issue if a route is wrong or missing.
 
