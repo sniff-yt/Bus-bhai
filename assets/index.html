@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Bus Bhai</title>
+<link rel="stylesheet" href="lib/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="map" aria-label="Map"></div>
+
+<!-- Top: search -->
+<div class="top" id="top">
+  <div class="searchbar" id="searchbar">
+    <button class="icon-btn sb-left" id="sbBack" aria-label="Back"></button>
+    <input id="q" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+    <button class="icon-btn sb-clear" id="sbClear" aria-label="Clear"></button>
+  </div>
+  <div class="banner" id="offline" hidden></div>
+</div>
+
+<!-- Search results overlay -->
+<div class="search-panel" id="searchPanel" hidden>
+  <div class="sp-inner" id="spInner"></div>
+</div>
+
+<!-- Map controls -->
+<div class="fabs" id="fabs">
+  <button class="fab" id="locate" aria-label="My location"></button>
+</div>
+
+<!-- Bottom sheet -->
+<section class="sheet" id="sheet" data-snap="half">
+  <div class="sheet-grip" id="grip"><span></span></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</section>
+
+<!-- Full pages -->
+<section class="page" id="page-saved" hidden><div class="page-inner" id="savedInner"></div></section>
+<section class="page" id="page-settings" hidden><div class="page-inner" id="settingsInner"></div></section>
+
+<!-- Tabs -->
+<nav class="tabbar" id="tabbar">
+  <button class="tab active" data-tab="map"><i></i><span data-t="tabMap"></span></button>
+  <button class="tab" data-tab="saved"><i></i><span data-t="tabSaved"></span></button>
+  <button class="tab" data-tab="settings"><i></i><span data-t="tabSettings"></span></button>
+</nav>
+
+<!-- Modal -->
+<div class="modal" id="modal" hidden><div class="modal-card" id="modalCard"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="lib/leaflet.js"></script>
+<script src="lib/mqtt.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/live.js"></script>
+<script src="js/basemap.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
