@@ -1,5 +1,7 @@
 # Bus Bhai Hyderabad 🚌
 
+[![Contribute via UPI](https://img.shields.io/badge/Contribute-UPI%20%2F%20GPay-1F5C4A?style=for-the-badge)](https://sniff-yt.github.io/Bus-bhai/)
+
 Free, open-source Android bus app for Hyderabad and Telangana. No ads, no login, no tracking.
 
 <p>
@@ -38,6 +40,9 @@ A new signing key is created on first build. APKs you build won't install over t
 
 ## Contributing
 Wrong or missing route? Open an issue with the route number and stops. PRs welcome, especially for district routes and timings.
+
+## Support
+Bus Bhai stays free with no ads. If it helps you, **[chip in via UPI](https://sniff-yt.github.io/Bus-bhai/)**.
 
 ## License
 MIT. Map data © OpenStreetMap contributors (ODbL). Route data © TGSRTC open data.

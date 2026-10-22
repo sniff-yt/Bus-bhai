@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Support Bus Bhai</title>
+<meta name="description" content="Bus Bhai is a free, open-source bus app for Hyderabad and Telangana. Chip in to keep it free.">
+<meta name="theme-color" content="#F6F2EA">
+<link rel="icon" href="icon.png">
+<style>
+@font-face{font-family:Inter;src:url(Inter.ttf);font-weight:100 900}
+@font-face{font-family:Serif;src:url(InstrumentSerif.ttf)}
+:root{--bg:#F6F2EA;--card:#FFFDF8;--ink:#1C1A17;--mute:#7A746A;--line:#E7E0D3;--acc:#1F5C4A;--acc2:#E9F1EC}
+@media(prefers-color-scheme:dark){:root{--bg:#141311;--card:#1C1B18;--ink:#F3EFE7;--mute:#9B9488;--line:#2C2A26;--acc:#7CC4A6;--acc2:#1E2B26}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;justify-content:center;padding:28px 18px 40px}
+main{width:100%;max-width:420px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;align-items:center;gap:12px}
+header img{width:44px;height:44px;border-radius:12px}
+header b{font-weight:600;font-size:15px;display:block}
+header span{font-size:13px;color:var(--mute)}
+h1{font-family:Serif,Georgia,serif;font-weight:400;font-size:40px;line-height:1.05;letter-spacing:-.5px}
+h1 i{color:var(--acc)}
+p.lede{color:var(--mute);font-size:15px;line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:600}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:14px;padding:14px 0;font:600 16px Inter,sans-serif;cursor:pointer;transition:.15s}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--card)}
+.amt{display:flex;align-items:center;border:1px solid var(--line);border-radius:14px;padding:0 14px;gap:6px}
+.amt span{font-size:20px;color:var(--mute)}
+.amt input{flex:1;border:0;background:transparent;color:var(--ink);font:600 22px Inter,sans-serif;padding:14px 0;outline:none;width:100%}
+.pay{display:block;text-align:center;text-decoration:none;background:var(--ink);color:var(--bg);border-radius:16px;padding:17px;font:600 16px Inter,sans-serif;transition:.15s}
+.pay:active{transform:scale(.98)}
+.pay.off{opacity:.35;pointer-events:none}
+.apps{font-size:12.5px;color:var(--mute);text-align:center}
+.qr{display:none;flex-direction:column;align-items:center;gap:10px}
+.qr img{width:200px;height:200px;background:#fff;border-radius:14px;padding:10px}
+.qr small{color:var(--mute);font-size:13px;text-align:center}
+@media(hover:hover) and (pointer:fine){.qr{display:flex}.mobile{display:none}}
+.id{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--acc2);border-radius:14px;padding:12px 14px}
+.id code{font:500 14px ui-monospace,Menlo,monospace;word-break:break-all}
+.id button{border:0;background:var(--acc);color:var(--card);border-radius:10px;padding:8px 12px;font:600 13px Inter,sans-serif;cursor:pointer;flex-shrink:0}
+ul{list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--mute)}
+ul li::before{content:"→ ";color:var(--acc)}
+footer{text-align:center;font-size:13px;color:var(--mute)}
+footer a{color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+  <header><img src="icon.png" alt=""><div><b>Bus Bhai</b><span>Hyderabad · Telangana</span></div></header>
+  <div>
+    <h1>Keep the buses <i>free</i> for everyone.</h1>
+    <p class="lede" style="margin-top:12px">Bus Bhai has no ads, no login and no tracking. If it saved you a wait at the stop, chip in for a chai.</p>
+  </div>
+
+  <section class="card">
+    <div class="label">Choose an amount</div>
+    <div class="chips">
+      <button class="chip" data-v="29">₹29</button>
+      <button class="chip on" data-v="99">₹99</button>
+      <button class="chip" data-v="199">₹199</button>
+      <button class="chip" data-v="499">₹499</button>
+    </div>
+    <label class="amt"><span>₹</span><input id="amt" inputmode="numeric" pattern="[0-9]*" value="99" aria-label="Amount"></label>
+    <div class="mobile" style="display:flex;flex-direction:column;gap:10px">
+      <a id="pay" class="pay" href="#">Pay ₹99 with UPI</a>
+      <div class="apps">Opens GPay, PhonePe, Paytm or any UPI app</div>
+    </div>
+    <div class="qr">
+      <img src="upi-qr.svg" alt="UPI QR code">
+      <small>Scan with any UPI app on your phone,<br>then enter the amount.</small>
+    </div>
+    <div class="id"><code id="vpa">baddampujithareddy19@okhdfcbank</code><button id="copy">Copy</button></div>
+  </section>
+
+  <section class="card">
+    <div class="label">Where it goes</div>
+    <ul>
+      <li>Adding district routes and better timings</li>
+      <li>Keeping the live bus sharing running</li>
+      <li>Time to fix bugs you report</li>
+    </ul>
+  </section>
+
+  <footer>Open source on <a href="https://github.com/sniff-yt/Bus-bhai">GitHub</a> · Thank you 🙏</footer>
+</main>
+<script>
+const VPA='baddampujithareddy19@okhdfcbank',amt=document.getElementById('amt'),pay=document.getElementById('pay');
+function upd(){const v=parseInt(amt.value.replace(/\D/g,''))||0;amt.value=v||'';
+ document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',+c.dataset.v===v));
+ pay.textContent=v?`Pay ₹${v} with UPI`:'Enter an amount';pay.classList.toggle('off',!v);
+ pay.href='upi://pay?'+new URLSearchParams({pa:VPA,pn:'Bus Bhai',am:v+'.00',cu:'INR',tn:'Bus Bhai contribution'}).toString().replace(/\+/g,'%20');}
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{amt.value=c.dataset.v;upd()});
+amt.oninput=upd;upd();
+document.getElementById('copy').onclick=e=>{navigator.clipboard.writeText(VPA).then(()=>{e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy',1500)})};
+</script>
+</body>
+</html>
