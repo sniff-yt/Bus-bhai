@@ -20,7 +20,7 @@
   };
   if (!P.device) { P.device = 'd' + Math.random().toString(36).slice(2, 12); save('device', P.device); }
 
-  var D = null, map = null, live = new Live();
+  var D = null, M = null, map = null, live = new Live();
   var S = { tab: 'map', stack: [], snap: 'half', me: null, meAcc: 0, locState: 'unknown', buses: {}, share: null, alarm: null,
     pick: null, between: { a: null, b: null }, typeFilter: 'all', timeFrom: null, wanted: {}, fitted: false, tick: 0 };
   var L_ = {}; // map layers
@@ -104,6 +104,7 @@
     map = L.map('map', { zoomControl: false, attributionControl: true, center: HYD, zoom: 12, minZoom: 7, maxBounds: [[15.4, 76.8], [20.3, 81.8]], maxBoundsViscosity: 0.8, tap: true, preferCanvas: false });
     map.attributionControl.setPrefix(false);
     setTiles(document.documentElement.classList.contains('dark'));
+    L_.metro = L.layerGroup().addTo(map);
     L_.near = L.layerGroup().addTo(map);
     L_.route = L.layerGroup().addTo(map);
     L_.buses = L.layerGroup().addTo(map);
@@ -417,12 +418,13 @@
     else if (v.v === 'route') html = viewRoute(v);
     else if (v.v === 'place') html = viewPlace(v);
     else if (v.v === 'between') html = viewBetween(v);
+    else if (v.v === 'metro') html = M ? viewStation(v) : '';
     var keep = entering ? 0 : body.scrollTop;
     body.innerHTML = '<div class="' + (entering ? 'view-enter' : '') + '">' + html + '</div>';
     body.scrollTop = keep;
     $('#sbBack').innerHTML = S.stack.length ? icon('back') : icon('search');
     $('#sbBack').setAttribute('aria-label', S.stack.length ? t('back') : t('searchPh'));
-    if (!document.activeElement || document.activeElement.id !== 'q') $('#q').value = v.v === 'route' ? D.routes[v.r].id : v.v === 'place' ? D.places[v.p].name : '';
+    if (!document.activeElement || document.activeElement.id !== 'q') $('#q').value = v.v === 'route' ? D.routes[v.r].id : v.v === 'place' ? D.places[v.p].name : v.v === 'metro' && M ? stName(v.c) : '';
     $('#sbClear').innerHTML = ($('#q').value ? icon('x') : '');
     $('#sbClear').setAttribute('aria-label', t('clear'));
     if (entering) { drawMap(); syncSubs(); }
@@ -434,7 +436,7 @@
     var h = '<div class="sh-head"><div class="grow"><h1 class="h1">' + esc(t('homeTitle')) + '</h1><div class="sub">' + esc(greetingSub()) + '</div></div></div>';
     h += '<div class="chips" style="margin-bottom:16px">' +
       '<button class="chip" data-act="nearest">' + icon('navi') + esc(t('fromNearest')) + '</button>' +
-      '<button class="chip" data-act="between">' + icon('route') + esc(t('betweenStops')) + '</button>' + '</div>';
+      '<button class="chip" data-act="between">' + icon('route') + esc(t('betweenStops')) + '</button>' + (M ? '<button class="chip" data-act="nearmetro">' + metroIcon() + esc(t('nearestMetro')) + '</button>' : '') + '</div>';
     if (S.alarm || S.share) h += activeCard();
     var origin = S.me || null;
     if (!origin) {
@@ -521,6 +523,7 @@
     var h = '<div class="sh-head"><div class="grow"><h1 class="h1">' + esc(stopName(pl.stops[0])) + '</h1><div class="sub">' + esc(t('nRoutes', { n: pl.routeCount }) + (pl.stops.length > 1 ? ' · ' + t('nPlatforms', { n: pl.stops.length }) : '') + (nearPlaceLabel(pl) ? ' · ' + t('near', { p: nearPlaceLabel(pl) }) : '')) + '</div></div>' +
       '<button class="round-btn' + (fav ? ' on' : '') + '" data-act="favplace" aria-pressed="' + fav + '" aria-label="' + esc(fav ? t('unsave') : t('save')) + '">' + icon(fav ? 'starf' : 'star') + '</button></div>';
     h += '<div class="chips" style="margin-bottom:10px">' + timeChip() + '<button class="chip" data-act="betweenFrom">' + icon('route') + esc(t('goSomewhere')) + '</button><button class="chip" data-act="reportplace">' + icon('flag') + esc(t('report')) + '</button></div>';
+    h += metroNearPlace(pl);
     h += typeChips();
     var deps = nextDepartures(pl);
     var anyLive = deps.some(function (x) { return x.live; });
@@ -645,6 +648,11 @@
       var pl = D.places[v.p];
       L.marker([pl.lat, pl.lon], { icon: divIcon('place-dot', 14), keyboard: false }).addTo(L_.pin);
       if (!S.fitted) { S.fitted = true; flyTo([pl.lat, pl.lon], 16); }
+    } else if (v.v === 'metro') {
+      var ms = M.st[v.c];
+      L.marker([ms[2], ms[3]], { icon: divIcon('place-dot', 14), keyboard: false }).addTo(L_.pin);
+      D.nearby(ms[2], ms[3], 700, 10).forEach(function (x) { var m = L.marker([x.place.lat, x.place.lon], { icon: divIcon('near-dot', 10), keyboard: false, title: x.place.name }).addTo(L_.near); m.on('click', function () { openPlace(x.place); }); });
+      if (!S.fitted) { S.fitted = true; flyTo([ms[2], ms[3]], 16); }
     } else if (v.v === 'between') {
       [S.between.a, S.between.b].forEach(function (pl) { if (pl) L.marker([pl.lat, pl.lon], { icon: divIcon('place-dot', 14), keyboard: false }).addTo(L_.pin); });
       if (!S.fitted && S.between.a && S.between.b) { S.fitted = true; fitTo([[S.between.a.lat, S.between.a.lon], [S.between.b.lat, S.between.b.lon]], 15); }
@@ -679,6 +687,147 @@
     S.timeFrom = null;
     var v = { v: 'place', p: pl.id };
     if (cur().v === 'place') replaceTop(v); else push(v);
+    if (S.snap === 'peek') setSnap('half');
+  }
+
+
+  // ---------- Hyderabad Metro (HMRL GTFS, July 2026, public domain) ----------
+  function metroIcon() { return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 17l-2 4M15 17l2 4"/><circle cx="9" cy="14" r=".6" fill="currentColor"/><circle cx="15" cy="14" r=".6" fill="currentColor"/></svg>'; }
+  function stName(c) { var s = M.st[c]; return s ? (P.lang === 'te' ? s[1] : s[0]) : c; }
+  function stNameByEn(en) { for (var c in M.st) if (M.st[c][0] === en) return stName(c); return en; }
+  function lineOf(id) { for (var i = 0; i < M.lines.length; i++) if (M.lines[i].id === id) return M.lines[i]; return null; }
+  function lineName(l) { return P.lang === 'te' ? l.te : l.en; }
+  function lpill(l) { return '<span class="rpill sm" style="background:' + l.c + ';color:#fff">' + esc(lineName(l)) + '</span>'; }
+  function svcOf(d) { var w = d.getDay(); return w === 0 ? 'SU' : w === 6 ? 'SA' : 'WK'; }
+  function svcDay(off) { var d = new Date(); d.setDate(d.getDate() + off); return svcOf(d); }
+  function depList(c, line, dir, svc) { var k = M.dep[line + ':' + dir + ':' + svc]; return k && k[c] ? k[c] : null; }
+  /** Next trains: [{m: minutes from now, clock, head}] across midnight into the next service day. */
+  function nextTrains(c, line, dir, n) {
+    var now = nowM(), out = [];
+    for (var day = 0; day < 2 && out.length < n; day++) {
+      var dl = depList(c, line, dir, svcDay(day)); if (!dl) continue;
+      for (var i = 0; i < dl[0].length && out.length < n; i++) {
+        var m = dl[0][i] + day * 1440 - now;
+        if (m >= -0.5) out.push({ m: m, clock: dl[0][i], head: dl[1][i] || null });
+      }
+    }
+    return out;
+  }
+  function headwayM(c, line, dir) {
+    var dl = depList(c, line, dir, svcDay(0)); if (!dl) return null;
+    var now = nowM(), xs = dl[0].filter(function (m) { return m >= now - 30 && m <= now + 90; });
+    if (xs.length < 3) return null;
+    return Math.max(1, Math.round((xs[xs.length - 1] - xs[0]) / (xs.length - 1)));
+  }
+  function nearestStations(lat, lon, n, maxD) {
+    var out = Object.keys(M.st).map(function (c) { var s = M.st[c]; return { c: c, d: Core.dist(lat, lon, s[2], s[3]) }; });
+    out.sort(function (a, b) { return a.d - b.d; });
+    if (maxD) out = out.filter(function (x) { return x.d <= maxD; });
+    return out.slice(0, n);
+  }
+  function searchMetro(q) {
+    var n = Core.norm(q); if (n.length < 2 && !/[^\x00-\x7f]/.test(q)) return [];
+    var toks = n.split(' ').filter(Boolean), qt = q.trim();
+    var wantMetro = /metro|మెట్రో/i.test(q); toks = toks.filter(function (x) { return x !== 'metro'; });
+    var hits = [];
+    Object.keys(M.st).forEach(function (c) {
+      var s = M.st[c], en = Core.norm(s[0]), words = en.split(' ');
+      var ok = toks.length ? toks.every(function (tk) { return words.some(function (w) { return w.indexOf(tk) === 0; }) || (tk.length >= 4 && en.indexOf(tk) >= 0); }) : wantMetro;
+      if (!ok && qt && s[1].indexOf(qt) >= 0) ok = true;
+      if (!ok && c.toLowerCase() === n) ok = true;
+      if (ok) hits.push([en.indexOf(toks.join(' ')) === 0 ? 0 : 1, c]);
+    });
+    hits.sort(function (a, b) { return a[0] - b[0]; });
+    return hits.map(function (x) { return x[1]; });
+  }
+  function stationRow(c, d, attr) {
+    var s = M.st[c];
+    var meta = (d == null ? '' : (d <= 1500 ? t('walk', { m: Math.max(1, Math.round(d / 75)) }) : (d / 1000).toFixed(1) + ' km') + ' · ') + s[4].map(function (id) { return lineName(lineOf(id)); }).join(' + ');
+    var dots = s[4].map(function (id) { return '<i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + lineOf(id).c + ';margin-left:3px"></i>'; }).join('');
+    return '<button class="row" ' + (attr || 'data-metro') + '="' + c + '" aria-label="' + esc(t('metroStation') + ' ' + stName(c) + ', ' + meta) + '"><div class="lead" style="color:' + lineOf(s[4][0]).c + '">' + metroIcon() + '</div><div class="grow"><div class="title">' + esc(stName(c)) + '</div><div class="meta">' + esc(meta) + '</div></div><div class="trail">' + dots + '</div></button>';
+  }
+  function metroNearPlace(pl) {
+    if (!M) return '';
+    var ns = nearestStations(pl.lat, pl.lon, 2, 800);
+    if (!ns.length) return '';
+    return '<div class="section-label">' + esc(t('metroNearby')) + '</div><div class="card" style="margin-bottom:12px">' + ns.map(function (x) { return stationRow(x.c, x.d); }).join('') + '</div>';
+  }
+  function viewStation(v) {
+    var c = v.c, s = M.st[c];
+    var h = '<div class="sh-head"><div class="grow"><h1 class="h1">' + esc(stName(c)) + '</h1><div class="sub">' + esc(t('metroStation') + (s[4].length > 1 ? ' · ' + t('interchange') : '')) + '</div><div class="rpills" style="margin-top:8px">' + s[4].map(function (id) { return lpill(lineOf(id)); }).join(' ') + '</div></div></div>';
+    h += '<div class="chips" style="margin-bottom:10px"><button class="chip" data-act="fares">' + icon('route') + esc(t('faresFromHere')) + '</button></div>';
+    s[4].forEach(function (id) {
+      var l = lineOf(id);
+      h += '<div class="section-label">' + esc(lineName(l)) + '</div><div class="card">';
+      [0, 1].forEach(function (dir) {
+        var tr = nextTrains(c, id, dir, 3);
+        var term = dir === 0 ? l.s[l.s.length - 1] : l.s[0];
+        if (term === c) return;
+        var today = depList(c, id, dir, svcDay(0));
+        var hw = headwayM(c, id, dir);
+        var meta = '';
+        if (tr.length > 1) meta = t('then', { m: tr[1].m < 60 ? minsTxt(tr[1].m) : Core.fmtClock(tr[1].clock) });
+        if (hw) meta += (meta ? ' · ' : '') + t('every', { m: hw });
+        if (today) meta += (meta ? ' · ' : '') + t('firstLast', { a: Core.fmtClock(today[0][0]), b: Core.fmtClock(today[0][today[0].length - 1]) });
+        var first = tr[0];
+        var shortTurn = first && first.head ? ' (' + t('to', { s: stNameByEn(first.head) }) + ')' : '';
+        var trail = first ? '<div class="eta">' + (first.m < 60 ? mins(first.m) : esc(Core.fmtClock(first.clock))) + '</div><div class="tag">' + esc(t('sched')) + '</div>' : '<div class="tag">' + esc(t('noTrains')) + '</div>';
+        h += '<button class="row" data-act="mtimes" data-line="' + id + '" data-dir="' + dir + '" aria-label="' + esc(t('towards', { s: stName(term) }) + shortTurn + ', ' + meta) + '"><span style="width:6px;align-self:stretch;border-radius:3px;background:' + l.c + ';flex:none"></span><div class="grow"><div class="title">' + esc(t('towards', { s: stName(term) }) + shortTurn) + '</div><div class="meta">' + esc(meta) + '</div></div><div class="trail">' + trail + '</div></button>';
+      });
+      h += '</div>';
+    });
+    var nb = D.nearby(s[2], s[3], 700, 8);
+    h += '<div class="section-label">' + esc(t('busStopsNear')) + '</div>';
+    if (!nb.length) h += '<div class="card"><div class="empty"><div class="t1">' + esc(t('noBusNear')) + '</div></div></div>';
+    else { h += '<div class="card">'; nb.forEach(function (x) { h += placeRow(x.place, x.d); }); h += '</div>'; }
+    return h + '<div class="foot">' + esc(t('metroAttrib')) + '</div>' + footer();
+  }
+  function metroDayModal(c, line, dir) {
+    var l = lineOf(line), dl = depList(c, line, dir, svcDay(0)); if (!dl) return;
+    var term = dir === 0 ? l.s[l.s.length - 1] : l.s[0], now = nowM(), byH = {};
+    dl[0].forEach(function (m, i) { var hr = Math.floor(m / 60); (byH[hr] = byH[hr] || []).push([m, i]); });
+    var nextM = dl[0].filter(function (m) { return m >= now; })[0];
+    var h = '<h3>' + esc(stName(c) + ' · ' + t('towards', { s: stName(term) })) + '</h3><p>' + esc(t('metroDaySub', { n: dl[0].length })) + '</p>';
+    Object.keys(byH).map(Number).sort(function (a, b) { return a - b; }).forEach(function (hr) {
+      h += '<div style="display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)"><div style="width:58px;flex:none;color:var(--sub);font-size:13px;font-weight:600;padding-top:6px">' + esc(Core.fmtClock(hr * 60).replace(':00', '')) + '</div><div style="display:flex;flex-wrap:wrap;gap:6px">' +
+        byH[hr].map(function (x) { var m = x[0], past = m < now - 1, nx = m === nextM, sh = dl[1][x[1]]; return '<span class="rpill sm" style="' + (nx ? 'background:' + l.c + ';color:#fff' : past ? 'opacity:.4' : '') + '"' + (sh ? ' title="' + esc(sh) + '"' : '') + '>' + esc(Core.fmtClock(m).replace(/ (AM|PM)/, '')) + (sh ? '*' : '') + '</span>'; }).join('') + '</div></div>';
+    });
+    if (Object.keys(dl[1]).length) h += '<p style="margin-top:10px;font-size:12px">' + esc(t('shortTurnNote')) + '</p>';
+    h += '<div class="btns"><button class="btn ink block" data-m="close">' + esc(t('done')) + '</button></div>';
+    modal(h);
+  }
+  function faresModal(c) {
+    var h = '<h3>' + esc(t('faresFrom', { s: stName(c) })) + '</h3><p>' + esc(t('faresSub')) + '</p>';
+    M.lines.forEach(function (l) {
+      h += '<div class="section-label">' + esc(lineName(l)) + '</div>';
+      l.s.forEach(function (d) {
+        if (d === c) return;
+        var f = M.fare[c + '>' + d];
+        if (f == null) return;
+        h += '<div style="display:flex;justify-content:space-between;padding:9px 2px;border-top:1px solid var(--line)"><span>' + esc(stName(d)) + '</span><b>₹' + f + '</b></div>';
+      });
+    });
+    h += '<div class="btns"><button class="btn ink block" data-m="close">' + esc(t('done')) + '</button></div>';
+    modal(h);
+  }
+  function drawMetro() {
+    if (!M || !map) return;
+    L_.metro.clearLayers();
+    M.lines.forEach(function (l) {
+      L.polyline(l.sh, { color: '#fff', weight: 7, opacity: .8, interactive: false }).addTo(L_.metro);
+      L.polyline(l.sh, { color: l.c, weight: 4, opacity: .95, interactive: false }).addTo(L_.metro);
+    });
+    Object.keys(M.st).forEach(function (c) {
+      var s = M.st[c], big = s[4].length > 1, col = lineOf(s[4][0]).c, sz = big ? 16 : 12;
+      var ic = L.divIcon({ className: '', html: '<div class="metro-dot' + (big ? ' x' : '') + '" style="border-color:' + col + '"></div>', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
+      var m = L.marker([s[2], s[3]], { icon: ic, keyboard: false, title: stName(c), zIndexOffset: -100 }).addTo(L_.metro);
+      m.on('click', function () { openStation(c); });
+    });
+  }
+  function openStation(c) {
+    if (!M || !M.st[c]) return;
+    var v = { v: 'metro', c: c };
+    if (cur().v === 'metro') replaceTop(v); else push(v);
     if (S.snap === 'peek') setSnap('half');
   }
 
@@ -727,9 +876,11 @@
     }
     var res = D.search(q, 25);
     if (S.pick) res.routes = [];
+    var mres = S.pick ? [] : searchMetro(q);
+    if (mres.length) h += '<div class="section-label">' + esc(t('metroStations')) + '</div><div class="card">' + mres.slice(0, 8).map(function (c) { return stationRow(c, null, 'data-smetro'); }).join('') + '</div>';
     if (res.routes.length) { h += '<div class="section-label">' + esc(t('routes')) + '</div><div class="card">' + res.routes.slice(0, 12).map(routeRow).join('') + '</div>'; }
     if (res.places.length) { h += '<div class="section-label">' + esc(t('stops')) + '</div><div class="card">' + res.places.slice(0, 20).map(splaceRow).join('') + '</div>'; }
-    if (!res.routes.length && !res.places.length) h += '<div class="empty"><div class="ill">' + icon('search') + '</div><div class="t1">' + esc(t('noMatch', { q: q })) + '</div><div>' + esc(t('noMatchBody')) + '</div></div>';
+    if (!res.routes.length && !res.places.length && !mres.length) h += '<div class="empty"><div class="ill">' + icon('search') + '</div><div class="t1">' + esc(t('noMatch', { q: q })) + '</div><div>' + esc(t('noMatchBody')) + '</div></div>';
     $('#spInner').innerHTML = h;
   }
 
@@ -971,7 +1122,7 @@
     $('#q').addEventListener('input', renderSearch);
     $('#q').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
-        var first = $('#spInner').querySelector('[data-sroute],[data-splace]'); if (first) first.click();
+        var first = $('#spInner').querySelector('[data-smetro],[data-sroute],[data-splace]'); if (first) first.click();
       }
     });
     $('#sbBack').addEventListener('click', function () {
@@ -985,6 +1136,7 @@
     });
     $('#searchPanel').addEventListener('click', function (e) {
       var q = e.target.closest('[data-q]'); if (q) { $('#q').value = q.dataset.q; renderSearch(); return; }
+      var sm = e.target.closest('[data-smetro]'); if (sm) { closeSearch(); openStation(sm.dataset.smetro); return; }
       var r = e.target.closest('[data-sroute]'); if (r) { var rr = D.routes[+r.dataset.sroute]; closeSearch(); openRoute(rr, 0); return; }
       var pn = e.target.closest('[data-act="pickNearest"]');
       var p = e.target.closest('[data-splace]');
@@ -1006,7 +1158,7 @@
         var k = s.dataset.set, v = s.dataset.val;
         if (k === 'text') v = +v;
         P[k] = v; save(k, v);
-        if (k === 'lang') { applyLang(); render(false); }
+        if (k === 'lang') { applyLang(); render(false); if (M) drawMetro(); }
         if (k === 'theme') applyTheme();
         if (k === 'text') applyText();
         renderSettings(); return;
@@ -1054,8 +1206,12 @@
         case 'reportplace': reportModal({ stop: D.places[v.p].stops[0], route: null }); return;
         case 'missing': reportModal({ missing: true, route: r, pat: p }); return;
         case 'time': timeModal(); return;
+        case 'nearmetro': var nm = S.me ? nearestStations(S.me[0], S.me[1], 1)[0] : null; if (nm) openStation(nm.c); else { askLocation(); toast(t('needLocation')); } return;
+        case 'fares': faresModal(v.c); return;
+        case 'mtimes': metroDayModal(v.c, act.dataset.line, +act.dataset.dir); return;
       }
     }
+    var mt = e.target.closest('[data-metro]'); if (mt) { openStation(mt.dataset.metro); return; }
     var st = e.target.closest('[data-stop]'); if (st) { selectStop(+st.dataset.stop, false); return; }
     var pl = e.target.closest('[data-place]'); if (pl) { openPlace(D.places[+pl.dataset.place]); return; }
     var ro = e.target.closest('[data-route]'); if (ro) { var rr = D.routes[+ro.dataset.route]; addRecent({ type: 'route', k: rr.key }); push({ v: 'route', r: rr.i, j: +ro.dataset.pat, sel: +ro.dataset.pos }); }
@@ -1090,6 +1246,7 @@
       window.__boot = Date.now() - started;
       render(true);
       startLocation();
+      fetch('data/metro.json').then(function (r) { return r.json(); }).then(function (mj) { M = mj; drawMetro(); render(false); }).catch(function () {});
       setTimeout(function () { live.connect(); }, 300);
       setInterval(function () { // expire stale buses, refresh ETAs every 20 s
         var now = Date.now(), ch = false;
@@ -1102,6 +1259,6 @@
   }
   window.__app = { S: S, P: P, get D() { return D; }, openRoute: openRoute, openPlace: openPlace, setTab: setTab, setSnap: setSnap, live: live, render: render,
     inject: function (topic, m) { live.handlers.forEach(function (f) { f(topic, m); }); }, setMe: function (lat, lon) { S.me = [lat, lon]; S.locState = 'ok'; if (!L_.me) L_.me = L.marker(S.me, { icon: divIcon('me-dot', 18), interactive: false }).addTo(map); else L_.me.setLatLng(S.me); render(true); },
-    alarmModal: function () { var v = cur(); var r = D.routes[v.r]; alarmModal(r, r.p[v.j], v.sel); }, fullDay: function () { var v = cur(); var r = D.routes[v.r]; fullDayModal(r, r.p[v.j], v.sel); }, push: push, between: S.between };
+    openStation: function (c) { openStation(c); }, get M() { return M; }, alarmModal: function () { var v = cur(); var r = D.routes[v.r]; alarmModal(r, r.p[v.j], v.sel); }, fullDay: function () { var v = cur(); var r = D.routes[v.r]; fullDayModal(r, r.p[v.j], v.sel); }, push: push, between: S.between };
   document.addEventListener('DOMContentLoaded', boot);
 })();

@@ -1,8 +1,13 @@
 /* English + Telugu strings. {x} placeholders. */
 (function (root) {
   var EN = {
+    nearestMetro: 'Nearest metro', metroStations: 'Metro stations', metroStation: 'Metro station', metroNearby: 'Metro nearby', interchange: 'Interchange',
+    towards: 'Towards {s}', firstLast: 'First {a}, last {b}', noTrains: 'No more today', busStopsNear: 'Bus stops near this station', noBusNear: 'No bus stops within 700 m',
+    faresFromHere: 'Fares from here', faresFrom: 'Fares from {s}', faresSub: 'Single-journey token fares from the HMRL timetable data.',
+    metroDaySub: '{n} trains today, from the HMRL timetable.', shortTurnNote: '* This train ends before the last station.',
+    metroAttrib: 'Metro timings from HMRL GTFS (July 2026), public domain via OpenCity. Not an official HMRL app.',
     tabMap: 'Explore', tabSaved: 'Saved', tabSettings: 'Settings',
-    searchPh: 'Route number or stop', myLocation: 'My location', back: 'Back', clear: 'Clear', sheetHandle: 'Resize panel',
+    searchPh: 'Route, stop or metro', myLocation: 'My location', back: 'Back', clear: 'Clear', sheetHandle: 'Resize panel',
     now: 'Now', min: ' min', h: 'h', m: 'm',
     homeTitle: 'Where to?', subDay: 'Live buses from riders, with the TGSRTC timetable as backup.', subNight: 'Night and early-morning buses are shown too.',
     fromNearest: 'Buses from nearest stop', betweenStops: 'Between two stops', betweenSub: 'Direct buses first, then one-change options.',
@@ -62,8 +67,13 @@
     whatBus: 'What kind of bus? (optional)', startSharing: 'Start sharing'
   };
   var TE = {
+    nearestMetro: 'దగ్గరి మెట్రో', metroStations: 'మెట్రో స్టేషన్లు', metroStation: 'మెట్రో స్టేషన్', metroNearby: 'దగ్గరలో మెట్రో', interchange: 'ఇంటర్‌చేంజ్',
+    towards: '{s} వైపు', firstLast: 'మొదటిది {a}, చివరిది {b}', noTrains: 'ఈరోజు ఇక లేవు', busStopsNear: 'ఈ స్టేషన్ దగ్గరి బస్ స్టాప్‌లు', noBusNear: '700 మీ లోపల బస్ స్టాప్‌లు లేవు',
+    faresFromHere: 'ఇక్కడి నుండి ఛార్జీలు', faresFrom: '{s} నుండి ఛార్జీలు', faresSub: 'HMRL టైమ్‌టేబుల్ డేటా నుండి సింగిల్ జర్నీ టోకెన్ ఛార్జీలు.',
+    metroDaySub: 'ఈరోజు {n} రైళ్లు, HMRL టైమ్‌టేబుల్ నుండి.', shortTurnNote: '* ఈ రైలు చివరి స్టేషన్ కంటే ముందే ఆగుతుంది.',
+    metroAttrib: 'మెట్రో సమయాలు HMRL GTFS (జూలై 2026) నుండి, OpenCity ద్వారా పబ్లిక్ డొమైన్. ఇది అధికారిక HMRL యాప్ కాదు.',
     tabMap: 'మ్యాప్', tabSaved: 'సేవ్ చేసినవి', tabSettings: 'సెట్టింగ్‌లు',
-    searchPh: 'రూట్ నంబర్ లేదా స్టాప్', myLocation: 'నా లొకేషన్', back: 'వెనక్కి', clear: 'క్లియర్', sheetHandle: 'ప్యానెల్ పరిమాణం మార్చండి',
+    searchPh: 'రూట్, స్టాప్ లేదా మెట్రో', myLocation: 'నా లొకేషన్', back: 'వెనక్కి', clear: 'క్లియర్', sheetHandle: 'ప్యానెల్ పరిమాణం మార్చండి',
     now: 'ఇప్పుడే', min: ' ని', h: 'గం', m: 'ని',
     homeTitle: 'ఎక్కడికి?', subDay: 'ప్రయాణికుల నుండి లైవ్ బస్సులు, TGSRTC టైమ్‌టేబుల్‌తో పాటు.', subNight: 'రాత్రి, తెల్లవారుజాము బస్సులు కూడా చూపిస్తాం.',
     fromNearest: 'దగ్గరి స్టాప్ నుండి బస్సులు', betweenStops: 'రెండు స్టాప్‌ల మధ్య', betweenSub: 'ముందు డైరెక్ట్ బస్సులు, తర్వాత ఒక మార్పుతో.',
